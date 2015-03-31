@@ -1,0 +1,118 @@
+apply plugin: "idea"
+apply plugin: "java"
+apply plugin: "maven"
+
+task wrapper(type: Wrapper) {
+	gradleVersion = '2.0'
+	distributionUrl = "http://services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
+}
+
+sourceSets {
+	main {
+		java {
+			srcDir 'main/src'
+		}
+		resources {
+			srcDir 'main/resources'
+		}
+	}
+	test {
+		java {
+			srcDir 'test/src'
+		}
+		resources {
+			srcDir 'test/resources'
+		}
+	}
+}
+
+group = "com.complexible.basecrm"
+version = "0.1"
+
+ext {
+	projectDescription = "Java implementation of the Base CRM API"
+	projectUrl = "https://github.com/complexible/basecrm"
+}
+
+sourceCompatibility = '1.7'
+targetCompatibility = '1.7'
+
+repositories {
+	mavenCentral()
+	maven {
+		url "maven.stardog.com"
+	}
+	maven {
+		url artifactoryUrl
+		credentials {
+			username artifactoryUsername
+			password artifactoryPassword
+		}
+	}
+}
+
+dependencies {
+	compile ("com.google.guava:guava:18.0") {
+		exclude group: "com.google.code.findbugs"
+	}
+
+	compile "org.apache.httpcomponents:httpclient:4.4"
+	compile "org.apache.httpcomponents:httpmime:4.4"
+
+	compile "com.fasterxml.jackson.core:jackson-core:2.3.3"
+	compile "com.fasterxml.jackson.core:jackson-databind:2.3.3"
+
+	compile "org.slf4j:slf4j-api:1.7.7"
+	compile "org.slf4j:slf4j-jdk14:1.7.7"
+
+	compile "com.complexible.common:cp-common-http:1.0"
+
+	testCompile 'junit:junit:4.11'
+}
+
+
+tasks.withType(Test) {
+	systemProperties = System.getProperties()
+}
+
+if (project.hasProperty('artifactoryUrl')
+	&& project.hasProperty('artifactoryUsername')
+	&& project.hasProperty('artifactoryPassword')) {
+
+	// this task is just so artifactory picks up the pom changes
+	task('uploadMvn', type: Upload) {
+		configuration = configurations.archives
+		repositories {
+			mavenDeployer {
+				repository(url: artifactoryUrl)
+				pom.project {
+					name = archivesBaseName
+					packaging = 'jar'
+					description projectDescription
+					url projectUrl
+				}
+
+				//mess with the generated pom to remove test dependencies from published artifacts
+				pom.withXml { XmlProvider xmlProvider ->
+					def xml = xmlProvider.asString()
+					def pomXml = new XmlParser().parse(new ByteArrayInputStream(xml.toString().bytes))
+
+					pomXml.dependencies.dependency.each { dep ->
+						if (dep.scope.text() != 'compile') {
+							def parent = dep.parent()
+							parent.remove(dep)
+						}
+					}
+
+					def newXml = new StringWriter()
+					def printer = new XmlNodePrinter(new PrintWriter(newXml))
+					printer.preserveWhitespace = true
+					printer.print(pomXml)
+					xml.setLength(0)
+					xml.append(newXml.toString())
+				}
+
+			}
+		}
+	}
+}
