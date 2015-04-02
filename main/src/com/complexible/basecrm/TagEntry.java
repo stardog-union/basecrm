@@ -16,13 +16,14 @@
 package com.complexible.basecrm;
 
 import com.google.common.base.Function;
+import com.google.common.base.Objects;
 
 /**
  * <p></p>
  *
  * @author  Michael Grove
  * @since   0.1
- * @version 0.1
+ * @version 0.2
  */
 public final class TagEntry {
 	public static final Function<TagEntry, Tag> UNWRAP = new Function<TagEntry, Tag>() {
@@ -47,5 +48,37 @@ public final class TagEntry {
 
 	public void setTag(final Tag theTag) {
 		mTag = theTag;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public int hashCode() {
+		return Objects.hashCode(mTag);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean equals(final Object theObj) {
+		if (theObj == this) {
+			return true;
+		}
+		else if (theObj instanceof TagEntry) {
+			return Objects.equal(mTag, ((TagEntry) theObj).mTag);
+		}
+		else {
+			return false;
+		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public String toString() {
+		return mTag.toString();
 	}
 }
