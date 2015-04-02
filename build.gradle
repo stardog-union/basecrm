@@ -27,7 +27,7 @@ sourceSets {
 }
 
 group = "com.complexible.basecrm"
-version = "0.1"
+version = "0.2-SNAPSHOT"
 
 ext {
 	projectDescription = "Java implementation of the Base CRM API"
