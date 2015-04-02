@@ -18,11 +18,11 @@ package com.complexible.basecrm;
 import java.util.List;
 
 /**
- * <p></p>
+ * <p>Interface for working with the Base Contacts API</p>
  *
  * @author  Michael Grove
  * @since   0.1
- * @version 0.1
+ * @version 0.2
  */
 public interface Contacts {
 	public Contact add(final Contact theContact);
@@ -31,7 +31,12 @@ public interface Contacts {
 
 	public void delete(final Contact theContact);
 
-	public List<Tag> addTags(final Contact theContact, final String... theTags);
+	/**
+	 * Set the tags of the contact record to the list of tags on the contact
+	 * @param theContact    the contact to set the tags for
+	 * @return              the list of tags
+	 */
+	public List<Tag> setTags(final Contact theContact);
 
 	public ContactFinder find();
 }

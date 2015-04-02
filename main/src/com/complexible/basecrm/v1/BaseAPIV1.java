@@ -56,6 +56,7 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import org.apache.http.HttpResponse;
@@ -81,7 +82,7 @@ import static com.google.common.collect.Iterators.transform;
  *
  * @author  Michael Grove
  * @since   0.1
- * @version 0.1
+ * @version 0.2
  */
 public final class BaseAPIV1 implements BaseAPI {
 	/**
@@ -223,18 +224,12 @@ public final class BaseAPIV1 implements BaseAPI {
 		 * @{inheritDoc}
 		 */
 		@Override
-		public List<Tag> addTags(final Contact theContact, final String... theTags) {
+		public List<Tag> setTags(final Contact theContact) {
 			Preconditions.checkArgument(theContact.getId() != null, "Contact must have an id to be tagged");
 
 			HttpPost aRequest = new HttpPost("https://tags.futuresimple.com/api/v1/taggings.json");
 
 			final String aTags = theContact.getTagsJoinedByComma();
-			String aNewTags = Joiner.on(",").join(filter(Iterators.forArray(theTags), new Predicate<String>() {
-				public boolean apply(final String theString) {
-					// TODO should use a regex here, but this is a really primitive tag representation
-					return aTags == null || !aTags.contains(theString);
-				}
-			}));
 
 			try {
 				ApacheHttp.HttpRequests.header(aRequest, BaseAPIV1.HEADER_AUTH2, mAuth.getToken());
@@ -244,9 +239,7 @@ public final class BaseAPIV1 implements BaseAPI {
 				                                        .parameter("app_id", "4")
 				                                        .parameter("taggable_type", "Contact")
 				                                        .parameter("taggable_id", theContact.getId())
-				                                        .parameter("tag_list", aTags == null
-				                                                               ? aNewTags
-				                                                               : aTags + "," + aNewTags)
+				                                        .parameter("tag_list", aTags)
 				                                        .postBody());
 
 				HttpResponse aResponse = null;
@@ -344,6 +337,10 @@ public final class BaseAPIV1 implements BaseAPI {
 								aContact.setOrganisation(new ContactEntry(theContact.getOrganisation().getContact()));
 							}
 
+							if (!Iterables.isEmpty(theContact.tags())) {
+								setTags(theContact);
+							}
+
 							return aContact;
 						}
 						catch (Exception e) {
@@ -359,6 +356,8 @@ public final class BaseAPIV1 implements BaseAPI {
 				throw new BaseAPIException(e);
 			}
 		}
+
+
 
 		/**
 		 * @{inheritDoc}
@@ -391,6 +390,10 @@ public final class BaseAPIV1 implements BaseAPI {
 								addToOrganization(aContact, theContact.getOrganisation().getContact());
 
 								aContact.setOrganisation(new ContactEntry(theContact.getOrganisation().getContact()));
+							}
+
+							if (!Iterables.isEmpty(theContact.tags())) {
+								setTags(theContact);
 							}
 
 							return aContact;

@@ -16,15 +16,21 @@
 package com.complexible.basecrm;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import static com.google.common.collect.Iterators.filter;
 
@@ -33,7 +39,7 @@ import static com.google.common.collect.Iterators.filter;
  *
  * @author  Michael Grove
  * @since   0.1
- * @version 0.1
+ * @version 0.2
  */
 public class Contact extends BaseObject {
 	private String mName;
@@ -68,8 +74,6 @@ public class Contact extends BaseObject {
 	private ContactEntry mOrganisation;
 	private String mOrganisationName;
 
-	private String mTagsJoinedByComma;
-
 	private String mCreatorId;
 	private String mContactId;
 	private String mAccountId;
@@ -79,31 +83,40 @@ public class Contact extends BaseObject {
 
 	private Account mSalesAccount;
 
+	private Set<String> mTags = Sets.newHashSet();
+
 	public Contact() {
 	}
 
 	public void addTags(final String... theTags) {
-		String aNewTags = Joiner.on(",").join(filter(Iterators.forArray(theTags), new Predicate<String>() {
-			public boolean apply(final String theString) {
-				// TODO should use a regex here, but this is a really primitive tag representation
-				return mTagsJoinedByComma == null || !mTagsJoinedByComma.contains(theString);
-			}
-		}));
+		for (String aTag : theTags) {
+			mTags.add(aTag);
+		}
+	}
 
-		if (mTagsJoinedByComma != null && mTagsJoinedByComma.length() > 0) {
-			mTagsJoinedByComma += ","+aNewTags;
+	public void removeTags(final String... theTags) {
+		for (String aTag : theTags) {
+			mTags.remove(aTag);
 		}
-		else {
-			mTagsJoinedByComma = aNewTags;
-		}
+	}
+
+	public Iterable<String> tags() {
+		return mTags;
+	}
+
+	public boolean hasTag(final String theTag) {
+		return mTags.contains(theTag);
 	}
 
 	public String getTagsJoinedByComma() {
-		return mTagsJoinedByComma;
+		return Joiner.on(",").join(mTags);
 	}
 
 	public void setTagsJoinedByComma(final String theTagsJoinedByComma) {
-		mTagsJoinedByComma = theTagsJoinedByComma;
+		mTags = Sets.newHashSet(Splitter.on(",")
+		                                .omitEmptyStrings()
+		                                .trimResults()
+		                                .split(theTagsJoinedByComma));
 	}
 
 	public String getCustomerStatus() {
